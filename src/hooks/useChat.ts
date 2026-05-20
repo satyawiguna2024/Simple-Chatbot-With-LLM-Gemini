@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
@@ -5,6 +6,7 @@ import { useMutation } from "@tanstack/react-query";
 type MessageTypes = {
   role: "user" | "assistant";
   content: string;
+  isError?: boolean;
 };
 
 export function useChat() {
@@ -24,7 +26,11 @@ export function useChat() {
       });
 
       if (!response.ok) {
-        throw new Error("Invalid send a message");
+        const errorData = await response.json().catch(() => ({}));
+        const error = new Error("API Error") as any;
+        error.status = response.status;
+        error.data = errorData;
+        throw error;
       }
 
       return response.json();
@@ -35,6 +41,20 @@ export function useChat() {
       setMessages((prev) => [...prev, {
         role: "assistant",
         content: data.content,
+      }]);
+    },
+    onError: (err: any) => {
+      // pesan error default
+      let errorMessage = "Terjadi kesalahan. Silakan coba lagi.";
+      if (err.status === 500) {
+        errorMessage = "Kuota API habis. Silakan coba lagi besok!";
+      }
+
+      // tampilkan sebagai bubble chat AI dengan flag isError
+      setMessages((prev) => [...prev, {
+        role: "assistant",
+        content: errorMessage,
+        isError: true,
       }]);
     },
   });
