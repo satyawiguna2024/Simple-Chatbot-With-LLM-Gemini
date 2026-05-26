@@ -6,15 +6,28 @@ import { GoogleGenAI } from "@google/genai";
 
 type SimilarityMetricType = "dot_product" | "cosine" | "euclidean";
 
-const {
-  GEMINI_API_KEY,
-  ASTRA_DB_NAMESPACE,
-  ASTRA_DB_COLLECTION,
-  ASTRA_DB_API_ENDPOINT,
-  ASTRA_DB_APPLICATION_TOKEN,
-} = process.env;
+const { GEMINI_API_KEY, ASTRA_DB_NAMESPACE, ASTRA_DB_COLLECTION, ASTRA_DB_API_ENDPOINT, ASTRA_DB_APPLICATION_TOKEN } = process.env;
 
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+
+/**
+ * ragData = []
+ * ini untuk pondasi pengetahuan tambahan yang di berikan kepada AI agar dia tidak "berhalusinasi" dan menjawab sesuai fakta yang kamu sediakan.
+ * yang bisa di masukan itu:
+ * --page_content: Teks asli dari data tersebut.
+ * --metadata: Informasi tambahan seperti judul, nomor halaman, atau URL asal. (harus menggunakan [WebBaseLoader])
+ * 
+ * LangChain sangat fleksibel. 
+ * Kamu bisa mengambil data dari hampir semua sumber digital. Berikut adalah beberapa yang paling populer:
+ * --PDF: Menggunakan PyPDFLoader untuk membaca buku atau laporan.
+ * --Text Files (.txt): File teks sederhana.
+ * --Word/CSV: Data tabel atau dokumen kantor.
+ * --YouTube: Kamu bisa memasukkan URL video, dan LangChain akan mengambil transkrip teksnya.
+ * --GitHub: Membaca seluruh kode dalam sebuah repository.
+ * --Notion/Google Drive: Mengambil catatan atau dokumen pribadi kamu.
+ * --SQL Database: Memungkinkan AI untuk "bertanya" langsung ke database perusahaanmu.
+ */
+
 
 const ragData = [
   "https://en.wikipedia.org/wiki/Indonesia",
@@ -31,6 +44,7 @@ const ragData = [
 const client = new DataAPIClient(ASTRA_DB_APPLICATION_TOKEN);
 const db = client.db(ASTRA_DB_API_ENDPOINT!, { keyspace: ASTRA_DB_NAMESPACE });
 
+// chunk splitter ?????????????????
 const splitter = new RecursiveCharacterTextSplitter({
   chunkSize: 512,
   chunkOverlap: 100,
@@ -47,6 +61,7 @@ const createCollection = async (metric: SimilarityMetricType = "dot_product") =>
   console.log("Result create collection:", res);
 };
 
+// function scrapPage ??????????????
 const scrapePage = async (url: string): Promise<string> => {
   const loader = new PuppeteerWebBaseLoader(url, {
     launchOptions: { headless: true },
@@ -58,11 +73,10 @@ const scrapePage = async (url: string): Promise<string> => {
     },
   });
 
-  const scraped = await loader.scrape();
-  // PERUBAHAN: tambah fallback string kosong agar tidak crash jika scrape() return null
-  return (scraped ?? "").replace(/<[^>]*>?/gm, "");
+  return (await loader.scrape())?.replace(/<[^>]*>?/gm, "");
 };
 
+// function loadSampleData ?????????????
 const loadSampleData = async () => {
   const collection = db.collection(ASTRA_DB_COLLECTION!);
 
@@ -72,8 +86,6 @@ const loadSampleData = async () => {
     const chunks = await splitter.splitText(content);
 
     for (const chunk of chunks) {
-      // PERUBAHAN: format `contents` menggunakan string biasa, bukan object
-      // SDK @google/genai menerima string langsung untuk embedContent
       const embeddingResponse = await ai.models.embedContent({
         model: "gemini-embedding-001",
         contents: chunk,
@@ -93,24 +105,15 @@ const loadSampleData = async () => {
 
 const run = async () => {
   try {
-    // Hapus collection lama dulu
-    try {
-      await db.dropCollection(ASTRA_DB_COLLECTION!);
-      console.log("Collection lama dihapus.");
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (_) {
-      console.log("Collection belum ada, skip drop.");
-    }
-
     console.log("Memulai pembuatan koleksi...");
     await createCollection();
 
-    console.log("Memulai loading data...");
+    console.log("Memulai loading data ke Astra DB...");
     await loadSampleData();
 
-    console.log("Selesai!");
+    console.log("Proses selesai!");
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Terjadi kesalahan:", error);
   }
 };
 

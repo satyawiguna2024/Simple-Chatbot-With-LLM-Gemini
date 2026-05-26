@@ -3,16 +3,11 @@ import "dotenv/config";
 import { DataAPIClient } from "@datastax/astra-db-ts";
 import { GoogleGenAI } from "@google/genai";
 
-const {
-  GEMINI_API_KEY,
-  ASTRA_DB_NAMESPACE,
-  ASTRA_DB_COLLECTION,
-  ASTRA_DB_API_ENDPOINT,
-  ASTRA_DB_APPLICATION_TOKEN,
-} = process.env;
+const { GEMINI_API_KEY, ASTRA_DB_NAMESPACE, ASTRA_DB_COLLECTION, ASTRA_DB_API_ENDPOINT, ASTRA_DB_APPLICATION_TOKEN } = process.env;
 
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
+// Db Astra
 const client = new DataAPIClient(ASTRA_DB_APPLICATION_TOKEN);
 const db = client.db(ASTRA_DB_API_ENDPOINT!, { keyspace: ASTRA_DB_NAMESPACE });
 
@@ -23,8 +18,6 @@ export async function POST(req: Request) {
 
     let docContext = "";
 
-    // PERUBAHAN: format `contents` menggunakan string biasa (bukan object dengan parts)
-    // Ini adalah cara yang benar untuk @google/genai SDK versi terbaru
     const embeddingResponse = await ai.models.embedContent({
       model: "gemini-embedding-001",
       contents: latestMessage,
@@ -49,29 +42,28 @@ export async function POST(req: Request) {
     }
 
     const systemInstruction = `
-You are an expert AI assistant specializing in Indonesian history, culture, government, geography, and society.
+      You are an expert AI assistant specializing in Indonesian history, culture, government, geography, and society.
 
-Your task:
-- Answer in detailed, comprehensive, and accurate Indonesian language.
-- Use the provided context as the primary source.
-- Explain answers clearly and deeply.
-- Provide historical background if relevant.
-- Structure answers with paragraphs and bullet points when needed.
-- If context is insufficient, use your general knowledge carefully.
-- Never hallucinate fake facts.
+      Your task:
+      - Answer in clear, accurate Indonesian.
+      - Use the provided context as the primary source.
+      - Be direct: answer the user's question first in 1–2 sentences, then add only essential detail.
+      - Keep the entire reply under 250 words. Do not pad, repeat, or add tangential background.
+      - Prefer short paragraphs; use bullet points only when listing 3+ distinct items.
+      - If context is insufficient, use general knowledge sparingly and stay within the word limit.
+      - Never hallucinate fake facts.
 
-If the answer does not exist in the context, reply with: "Saya tidak menemukan informasi tersebut."
+      If the answer does not exist in the context, reply only with: "Saya tidak menemukan informasi tersebut."
 
-CONTEXT:
---------------------
-START CONTEXT
-${docContext}
-END CONTEXT
---------------------
-`;
+      CONTEXT:
+      --------------------
+      START CONTEXT
+      ${docContext}
+      END CONTEXT
+      --------------------
+    `;
 
-    // PERUBAHAN: format messages untuk Gemini — role "assistant" diubah ke "model"
-    // dan pastikan hanya role "user" atau "model" yang masuk (bukan "system")
+    // pastikan hanya role "user" atau "model" yang masuk (bukan "system")
     const formattedContents = messages
       .filter((m: any) => m.role !== "system")
       .map((m: any) => ({
@@ -79,21 +71,19 @@ END CONTEXT
         parts: [{ text: m.content }],
       }));
 
-    // PERUBAHAN: model diubah ke "gemini-3.5-flash" (GA sejak 19 Mei 2026)
-    // PERUBAHAN: `config` adalah kunci yang benar untuk systemInstruction & temperature
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash",
       contents: formattedContents,
       config: {
         systemInstruction,
         temperature: 0.3,
+        maxOutputTokens: 800,
       },
     });
 
-    // PERUBAHAN: akses teks response dengan null-safe: response.text ?? ""
     return Response.json({
       role: "assistant",
-      content: response.text ?? "",
+      content: response.text,
     });
 
   } catch (err: any) {

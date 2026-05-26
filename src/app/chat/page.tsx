@@ -1,5 +1,5 @@
 export default function Chat() {
-  return(
+  return (
     <>
       <h1>Hello World</h1>
       <p>Ini merupakan halaman `/chat`</p>
