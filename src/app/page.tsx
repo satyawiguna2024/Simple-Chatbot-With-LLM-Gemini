@@ -8,7 +8,7 @@ import { useChat } from "@/hooks/useChat";
 
 export default function Home() {
   const [open, setOpen] = useState(false);
-  const { input, setInput, messages, handleSend, isPending } = useChat();
+  const { input, setInput, messages, handleSend, isPending, isThinking } = useChat();
 
   return (
     <>
@@ -93,7 +93,7 @@ export default function Home() {
                 </div>
               )))}
 
-            {isPending && (
+            {isThinking && (
               <div className="flex items-start gap-3">
                 <div className="w-9 h-9 rounded-full bg-gray-800 text-gray-50 flex items-center justify-center text-sm font-semibold shrink-0">
                   AI
