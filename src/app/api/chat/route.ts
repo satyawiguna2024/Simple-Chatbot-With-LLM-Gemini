@@ -77,7 +77,7 @@ export async function POST(req: Request) {
       config: {
         systemInstruction,
         temperature: 0.3,
-        maxOutputTokens: 800,
+        maxOutputTokens: 1000,
       },
     });
 

@@ -44,16 +44,20 @@ const ragData = [
 const client = new DataAPIClient(ASTRA_DB_APPLICATION_TOKEN);
 const db = client.db(ASTRA_DB_API_ENDPOINT!, { keyspace: ASTRA_DB_NAMESPACE });
 
-// chunk splitter ?????????????????
+/**
+ * splitter adalah sebuah fungsi yang digunakan untuk membagi teks menjadi beberapa bagian kecil (chunk) dengan ukuran tertentu.
+ * chunkSize:
+ * 100 character terakhir dari chunk sebelumnya akan dibawa ke chunk berikutnya..
+ */
 const splitter = new RecursiveCharacterTextSplitter({
-  chunkSize: 512,
+  chunkSize: 512, 
   chunkOverlap: 100,
 });
 
 const createCollection = async (metric: SimilarityMetricType = "dot_product") => {
   const res = await db.createCollection(ASTRA_DB_COLLECTION!, {
     vector: {
-      dimension: 3072,  // ✅ sesuai gemini-embedding-001
+      dimension: 3072,  // sesuai gemini-embedding-001 dengan ukuran
       metric,
     },
   });
