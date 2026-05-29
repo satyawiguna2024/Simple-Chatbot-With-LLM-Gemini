@@ -12,14 +12,14 @@ export function useChat() {
   const [isPending, setIsPending] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
 
-  // kirim pesan
-  const handleSend = async () => {
-    if (!input.trim()) return;
+  const sendMessage = async (text: string) => {
+    const content = text.trim();
+    if (!content) return;
     if (isPending) return;
 
     const userMessage: MessageTypes = {
       role: "user",
-      content: input,
+      content,
     };
 
     const nextMessages = [...messages, userMessage];
@@ -90,7 +90,7 @@ export function useChat() {
         ]);
       }
     } catch (error) {
-      console.error("Error in handleSend: ", error);
+      console.error("Error in sendMessage: ", error);
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: "Maaf, terjadi kesalahan. Coba lagi." },
@@ -101,11 +101,14 @@ export function useChat() {
     }
   };
 
+  const handleSend = () => sendMessage(input);
+
   return {
     input,
     setInput,
     messages,
     handleSend,
+    sendMessage,
     isPending,
     isThinking,
   };

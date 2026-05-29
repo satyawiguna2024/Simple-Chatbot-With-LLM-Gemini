@@ -8,8 +8,13 @@ import { useChat } from "@/hooks/useChat";
 
 export default function Home() {
   const [open, setOpen] = useState(false);
-  const { input, setInput, messages, handleSend, isPending, isThinking } =
-    useChat();
+  const { input, setInput, messages, handleSend, sendMessage, isPending, isThinking } = useChat();
+
+  const quickQuestions = [
+    "Kapan Indonesia merdeka?",
+    "Candi Borobudur",
+    "Siapa Yang Membacakan Teks Proklamasi?",
+  ];
 
   return (
     <>
@@ -32,11 +37,11 @@ export default function Home() {
           <div className="border-b border-default pb-4 flex items-start justify-between gap-4">
             <div>
               <h2 className="text-lg md:text-xl font-semibold text-title">
-                Ask with AI
+                Tanyakan dengan AI
               </h2>
 
               <p className="text-sm text-body mt-1">
-                Chat with AI assistant about this article.
+                Berbincanglah dengan asisten AI tentang artikel ini.
               </p>
             </div>
 
@@ -52,18 +57,27 @@ export default function Home() {
 
           {/* Chat Area */}
           <div className="flex-1 overflow-y-auto py-5 space-y-5 pr-2">
-            {/* AI Message */}
-            <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-full bg-brand text-white flex items-center justify-center text-sm font-semibold shrink-0">
-                AI
-              </div>
+            {/* Opening */}
+            {!messages.length && (
+              <div className="min-h-85 flex flex-col items-center justify-center gap-5">
+                <h1 className="font-sans text-center text-2xl">
+                  Apa yang bisa saya bantu?
+                </h1>
 
-              <div className="bg-default-100 border border-default rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%]">
-                <p className="text-sm leading-relaxed text-body">
-                  Hello 👋 How can I help you with this article?
-                </p>
+                <div className="w-full sm:max-w-120 flex sm:justify-center sm:flex-wrap overflow-x-auto gap-3 px-2">
+                  {quickQuestions.map((q) => (
+                    <button
+                      key={q}
+                      type="button"
+                      onClick={() => sendMessage(q)}
+                      className="px-3 py-2 font-sans text-gray-800 text-sm sm:text-base bg-gray-100 hover:bg-gray-200 rounded-xl whitespace-nowrap transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {messages.map((chats, index) =>
               chats.role === "user" ? (
@@ -120,8 +134,8 @@ export default function Home() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   required
-                  placeholder="you can ask about this article only!"
-                  className=" w-full resize-none rounded-2xl border border-default bg-transparent pl-4 pr-16 py-3 text-sm leading-6 focus:outline-none focus:ring-2 focus:ring-brand-medium max-h-40 overflow-y-auto"
+                  placeholder="Anda hanya bisa bertanya tentang artikel ini saja!"
+                  className="w-full resize-none rounded-2xl border border-default bg-transparent pl-4 pr-16 py-3 text-sm leading-6 focus:outline-none focus:ring-2 focus:ring-brand-medium max-h-40 overflow-y-auto"
                 />
                 <button
                   type="submit"

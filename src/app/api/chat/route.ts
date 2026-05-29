@@ -72,17 +72,16 @@ export async function POST(req: Request) {
       }));
 
     const response = await ai.models.generateContentStream({
-      model: "gemini-3.5-flash",
+      model: "gemini-2.5-flash-lite",
       contents: formattedContents,
       config: {
         systemInstruction,
         temperature: 0.3,
-        maxOutputTokens: 50,
+        maxOutputTokens: 1000,
       },
     });
 
     const encoder = new TextEncoder();
-
     const stream = new ReadableStream({
       async start(controller) {
         try {
