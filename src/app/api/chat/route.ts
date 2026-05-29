@@ -71,19 +71,40 @@ export async function POST(req: Request) {
         parts: [{ text: m.content }],
       }));
 
-    const response = await ai.models.generateContent({
+    const response = await ai.models.generateContentStream({
       model: "gemini-3.5-flash",
       contents: formattedContents,
       config: {
         systemInstruction,
         temperature: 0.3,
-        maxOutputTokens: 800,
+        maxOutputTokens: 50,
       },
     });
 
-    return Response.json({
-      role: "assistant",
-      content: response.text,
+    const encoder = new TextEncoder();
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of response) {
+            const text = chunk.text;
+            if (text) {
+              controller.enqueue(encoder.encode(text));
+            }
+          }
+          controller.close();
+        } catch (streamErr: any) {
+          controller.error(streamErr);
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+      },
     });
 
   } catch (err: any) {

@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import PeriodeMonarki from "@/components/sections/PeriodeMonarki";
 import PeriodePrasejarah from "@/components/sections/PeriodePrasejarah";
 import Modal from "@/components/ui/Modal";
@@ -8,13 +8,16 @@ import { useChat } from "@/hooks/useChat";
 
 export default function Home() {
   const [open, setOpen] = useState(false);
-  const { input, setInput, messages, handleSend, isPending } = useChat();
+  const { input, setInput, messages, handleSend, isPending, isThinking } =
+    useChat();
 
   return (
     <>
       {/* title */}
       <div>
-        <h1 className="font-serif text-2xl sm:text-3xl text-gray-800 border-b border-gray-400 pb-2 font-semibold">Sejarah Indonesia</h1>
+        <h1 className="font-serif text-2xl sm:text-3xl text-gray-800 border-b border-gray-400 pb-2 font-semibold">
+          Sejarah Indonesia
+        </h1>
 
         <PeriodePrasejarah />
         <br />
@@ -22,11 +25,7 @@ export default function Home() {
         <PeriodeMonarki />
       </div>
 
-      <Modal
-        open={open}
-        setOpen={setOpen}
-        labelButton="Ask with AI"
-      >
+      <Modal open={open} setOpen={setOpen} labelButton="Ask with AI">
         {/* Wrapper */}
         <div className="flex flex-col h-[75vh] max-h-175">
           {/* Header */}
@@ -66,13 +65,11 @@ export default function Home() {
               </div>
             </div>
 
-            {messages.map((chats, index) => (
+            {messages.map((chats, index) =>
               chats.role === "user" ? (
                 <div key={index} className="flex items-start gap-3 justify-end">
                   <div className="border text-gray-800 rounded-2xl rounded-tr-md px-4 py-3 max-w-[85%]">
-                    <p className="text-sm leading-relaxed">
-                      {chats.content}
-                    </p>
+                    <p className="text-sm leading-relaxed">{chats.content}</p>
                   </div>
 
                   <div className="w-9 h-9 rounded-full bg-gray-800 text-gray-50 flex items-center justify-center text-sm font-semibold shrink-0">
@@ -80,7 +77,7 @@ export default function Home() {
                   </div>
                 </div>
               ) : (
-                <div key={index} className="flex items-start gap-3" >
+                <div key={index} className="flex items-start gap-3">
                   <div className="w-9 h-9 rounded-full bg-gray-800 text-gray-50 flex items-center justify-center text-sm font-semibold shrink-0">
                     AI
                   </div>
@@ -91,9 +88,10 @@ export default function Home() {
                     </p>
                   </div>
                 </div>
-              )))}
+              ),
+            )}
 
-            {isPending && (
+            {isThinking && (
               <div className="flex items-start gap-3">
                 <div className="w-9 h-9 rounded-full bg-gray-800 text-gray-50 flex items-center justify-center text-sm font-semibold shrink-0">
                   AI
@@ -110,10 +108,12 @@ export default function Home() {
 
           {/* Footer Input */}
           <div className="border-t border-default pt-4">
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              handleSend();
-            }}>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSend();
+              }}
+            >
               <div className="relative">
                 <textarea
                   rows={1}
@@ -136,7 +136,7 @@ export default function Home() {
             </form>
           </div>
         </div>
-      </Modal >
+      </Modal>
     </>
   );
 }
